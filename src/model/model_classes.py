@@ -1,5 +1,9 @@
+import torch
+import torch.nn as nn
+from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
+
 class EfficientNet_ContextualData(nn.Module):
-    def __init__(self, num_classes, contextual_dim, tune_all_layers=True):
+    def __init__(self, n_classes, contextual_dim, tune_all_layers=True):
         super(EfficientNet_ContextualData, self).__init__()
 
         # Load EfficientNet-B0 with pretrained weights
@@ -23,7 +27,7 @@ class EfficientNet_ContextualData(nn.Module):
             nn.BatchNorm1d(2048),
             nn.ReLU(),
             nn.Dropout(0.5),
-            nn.Linear(2048, num_classes)  # Final output layer
+            nn.Linear(2048, n_classes)  # Final output layer
         )
 
     def forward(self, image_data, contextual_data):

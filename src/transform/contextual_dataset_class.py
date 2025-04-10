@@ -1,6 +1,8 @@
 import json
 import os
-
+import torch
+from torch.utils.data import Dataset
+from PIL import Image
 
 class ImageDatasetWithContext(Dataset):
     def __init__(self, image_dir, json_file, transform=None):
@@ -10,10 +12,9 @@ class ImageDatasetWithContext(Dataset):
         # Load metadata JSON
         with open(json_file, 'r') as f:
             metadata = json.load(f)
-
         # Extract images and annotations
         self.image_metadata = metadata["images"]  # List of image metadata dicts
-        self.annotations = {ann["image_id"]: ann["label"] for ann in metadata["annotations"]}  # Map image_id to label
+        self.annotations = {ann["image_id"]: ann["category_id"] for ann in metadata["annotations"]}  # Map image_id to label
         # Create a mapping: {filename -> (latitude, longitude, label)}
         self.image_data = {}
         for img in self.image_metadata:

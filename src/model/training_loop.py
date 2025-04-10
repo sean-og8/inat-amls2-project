@@ -27,11 +27,11 @@ def save_model(model, criterion, optimizer, epoch, model_name):
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 'loss': criterion,
-                }, f"runs/model_{model_name}.pth")
+                }, f"{model_name}.pth")
     return
 
 
-def run_epoch(model, loader, criterion, optimizer=None, epoch=0, mode="train"):
+def run_epoch(model, loader, device, criterion, optimizer=None, epoch=0, mode="train"):
     is_train = mode == "train"
     model.train() if is_train else model.eval()
 
@@ -71,7 +71,7 @@ def run_epoch(model, loader, criterion, optimizer=None, epoch=0, mode="train"):
     return avg_loss, accuracy
 
 
-def train_model(model, model_name, train_loader, val_loader, criterion, optimizer, epochs=5, early_stop_limit=5):
+def train_model(model, model_name, train_loader, val_loader, criterion, optimizer, device, epochs=5, early_stop_limit=5):
     best_val_loss = float('inf')
     early_stop_count = 0
     # lists to track of loss and accuracy metrics
@@ -79,12 +79,12 @@ def train_model(model, model_name, train_loader, val_loader, criterion, optimize
     train_acc_list, val_acc_list = [], []
 
     for epoch in range(epochs):
-        train_loss, train_acc = run_epoch(model, train_loader, criterion, optimizer, epoch, mode="train")
+        train_loss, train_acc = run_epoch(model, train_loader, device, criterion, optimizer, epoch, mode="train")
         # if no val loader, evaluate stopping based on train metrics (e.g. when training on validation after training on train before evaluating on test)
         if val_loader is None:
             val_loss, val_acc = train_loss, train_acc
         else:
-            val_loss, val_acc = run_epoch(model, val_loader, criterion, None, epoch, mode="validation")
+            val_loss, val_acc = run_epoch(model, val_loader, device, criterion, None, epoch, mode="validation")
         # store metrics
         train_loss_list.append(train_loss)
         val_loss_list.append(val_loss)
@@ -112,25 +112,26 @@ def train_model(model, model_name, train_loader, val_loader, criterion, optimize
 def full_train_pipeline(model, model_name, train_loader, val_loader, device):
     criterion= nn.CrossEntropyLoss().to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-3)
-    eval_metrics = train_model(model, model_name, train_loader, val_loader, criterion, optimizer, epochs=5, early_stop_limit=5)
+    print("Training model")
+    eval_metrics = train_model(model, model_name, train_loader, val_loader, criterion, optimizer, device, epochs=100, early_stop_limit=5)
     # load best model after early stopping
     checkpoint = torch.load(model_name + ".pth")
-    model = EfficientNet_ContextualData(1486, 3)
-    model.to(device)
+    model = EfficientNet_ContextualData(1486, 3).to(device)
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    print("Training on val data for 5 epochs")
     # train for 5 more epochs on validation set to get best performance
-    train_model(model, model_name, val_loader, None, criterion, optimizer, epochs=5, early_stop_limit=3)
+    train_model(model, model_name, val_loader, None, criterion, optimizer, device, epochs=5, early_stop_limit=3)
     # load and return final model
     checkpoint = torch.load(model_name + ".pth")
-    model = EfficientNet_ContextualData(1486, 3)
-    model.to(device)
+    model = EfficientNet_ContextualData(1486, 3).to(device)
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     return model, eval_metrics
 
 
 def test_model(model, test_loader, device):
+    print("Testing model")
     criterion= nn.CrossEntropyLoss().to(device)
-    test_loss, test_acc = run_epoch(model, test_loader, criterion, None, epoch=0, mode="validation")
+    test_loss, test_acc = run_epoch(model, test_loader, device, criterion, None, epoch=0, mode="validation")
     return test_loss, test_acc

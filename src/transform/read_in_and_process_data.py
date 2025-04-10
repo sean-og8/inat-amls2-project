@@ -2,7 +2,7 @@ from torch.utils.data import Subset, DataLoader
 from torchvision import datasets, transforms
 from sklearn.model_selection import train_test_split
 
-from src.model.model_classes import ImageDatasetWithContext
+from src.transform.contextual_dataset_class import ImageDatasetWithContext
 
 
 def data_preprocessing(train_image_dir, train_json_file, val_image_dir, val_json_file):
@@ -22,7 +22,7 @@ def data_preprocessing(train_image_dir, train_json_file, val_image_dir, val_json
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
-
+    print("Reading in full data and performing transforms")
     train_data = ImageDatasetWithContext(image_dir=train_image_dir, json_file=train_json_file, transform=train_transform)
     validation_data = ImageDatasetWithContext(image_dir=val_image_dir, json_file=val_json_file, transform=val_transform)
 
@@ -36,8 +36,8 @@ def data_preprocessing(train_image_dir, train_json_file, val_image_dir, val_json
         for line in f:
             bird_test_indices.append(int(line[0:-1]))
 
-    # Find all indices where the target (label) corresponds to birds
     # Create a subset dataset containing only birds
+    print("Subsetting for bird only data")
     train_data_birds = Subset(train_data, bird_indices)
 
     label_index_map = {}

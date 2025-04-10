@@ -4,5 +4,6 @@
 *.mat
 *.csv
 *.txt
+*.pyc
 /runs
 /report
