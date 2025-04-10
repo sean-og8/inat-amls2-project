@@ -3,5 +3,6 @@
 *.tgz
 *.mat
 *.csv
+*.txt
 /runs
 /report

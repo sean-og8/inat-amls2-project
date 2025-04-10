@@ -1,11 +1,27 @@
+
+import torch
+import torch.optim as optim
+import torch.nn as nn
+from torch.utils.data import Subset
+import torch.nn.functional as F
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+from torchvision.utils import make_grid 
+from torch.utils.tensorboard import SummaryWriter
+from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
+
+from src.model.model_classes import EfficientNet_ContextualData
+
+
 def log_metrics_tensor_board(data_type, accuracy, top_5_accuracy, loss, epoch ):
+    writer = SummaryWriter()
     writer.add_scalar(f"Loss -  {data_type}", loss, epoch)
     writer.add_scalar(f"Accuracy -  {data_type}", 100 * accuracy, epoch)
     writer.add_scalar(f"Top 5 Accuracy - {data_type}", 100 * top_5_accuracy, epoch)
     return
 
 
-def save_model(model, criterion, optimizer,  epoch, model_name):
+def save_model(model, criterion, optimizer, epoch, model_name):
     torch.save({
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
@@ -91,3 +107,30 @@ def train_model(model, model_name, train_loader, val_loader, criterion, optimize
             "val_acc": val_acc_list
         }
     return eval_metrics
+
+
+def full_train_pipeline(model, model_name, train_loader, val_loader, device):
+    criterion= nn.CrossEntropyLoss().to(device)
+    optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-3)
+    eval_metrics = train_model(model, model_name, train_loader, val_loader, criterion, optimizer, epochs=5, early_stop_limit=5)
+    # load best model after early stopping
+    checkpoint = torch.load(model_name + ".pth")
+    model = EfficientNet_ContextualData(1486, 3)
+    model.to(device)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    # train for 5 more epochs on validation set to get best performance
+    train_model(model, model_name, val_loader, None, criterion, optimizer, epochs=5, early_stop_limit=3)
+    # load and return final model
+    checkpoint = torch.load(model_name + ".pth")
+    model = EfficientNet_ContextualData(1486, 3)
+    model.to(device)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    return model, eval_metrics
+
+
+def test_model(model, test_loader, device):
+    criterion= nn.CrossEntropyLoss().to(device)
+    test_loss, test_acc = run_epoch(model, test_loader, criterion, None, epoch=0, mode="validation")
+    return test_loss, test_acc
