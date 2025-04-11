@@ -3,3 +3,8 @@
 *.tgz
 *.mat
 *.csv
+*.txt
+*.pyc
+*.pth
+/runs
+/report
