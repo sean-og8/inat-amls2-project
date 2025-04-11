@@ -21,7 +21,7 @@ This project implements a deep learning model for bird species identification us
 
 1. Clone this repository:
 ```bash
-git clone [repository-url]
+git clone https://github.com/sean-og8/inat-amls2-project.git
 cd inat-amls2-project
 ```
 
