@@ -65,9 +65,9 @@ def run_epoch(model, loader, device, criterion, optimizer=None, epoch=0, mode="t
     top_5_accuracy = top_5_correct / total
     log_metrics_tensor_board(mode, accuracy, top_5_accuracy, avg_loss, epoch)
 
-    print(f"{mode.capitalize()} Accuracy: {100 * accuracy:.2f}%")
-    print(f"Top 5 {mode.capitalize()} Accuracy: {100 * top_5_accuracy:.2f}%")
-    print(f"Epoch {epoch+1} - {mode.capitalize()} Loss: {avg_loss:.4f}")
+    print(f"Epoch {epoch+1}: {mode.capitalize()} Accuracy: {100 * accuracy:.2f}%")
+    print(f"Epoch {epoch+1}: Top 5 {mode.capitalize()} Accuracy: {100 * top_5_accuracy:.2f}%")
+    print(f"Epoch {epoch+1}: {mode.capitalize()} Loss: {avg_loss:.4f}")
     return avg_loss, accuracy
 
 
